@@ -53,7 +53,7 @@ print(find_G_right(graph, 'v1', 'v6', x))
 
 # print(x)
 
-
+#add
 
 
     

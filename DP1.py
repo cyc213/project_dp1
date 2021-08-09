@@ -67,20 +67,83 @@ def create_newGraph(graph, x):
             new_graph[i] = graph[i]
     return new_graph
 
+def find_p(graph_dic, p_output = {}, x_output = {}):
+    for i in graph_dic:
+        sub_p_output = []
+        sub_x_output = []
+        if(len(graph_dic[i]) == 1):
+            for j in range(0, 9):
+                sub_p_output.append(p_singleton(graph_dic[i], j))
+                sub_x_output.append(x_singleton(graph_dic[i], j))
+        else:
+            top = find_top(graph_dic[i])
+            x = find_x(graph_dic[i])
+            descend = find_descend_of_top(graph_dic[i], top, 'v6')
+            p_left = create_newGraph(graph_dic[i], find_G_left(top, x))
+            p_right = create_newGraph(graph_dic[i], find_G_right(descend, x))
+            for j in range(0, 9):
+                if((j - vertex_w_p[top][0]) < 0):
+                    sub_p_output.append(0)
+                    sub_x_output.append(0)
+                else:
+                    if(p_left == {}):
+                        left_value = 0
+                    else:
+                        for k in graph_dic:
+                            if(p_left == graph_dic[k]):
+                                left_value = vertex_w_p[top][1] + p_output[k][(j - vertex_w_p[top][0])]
+                                break
+                    
+                    if(p_right == {}):
+                        right_value = 0
+                    else:
+                        for k in graph_dic:
+                            if(p_right == graph_dic[k]):
+                                right_value = p_output[k][j]
+                                break
 
-def DP1(graph, output = []):
+                    sub_p_output.append(max(left_value, right_value))
+                    if(left_value >= right_value):
+                        sub_x_output.append(1)
+                    else:
+                        sub_x_output.append(0)
+        p_output[i] = sub_p_output
+        x_output[i] = sub_x_output
+    return p_output, x_output
+
+def p_singleton(graph, w):
+    if(w >= vertex_w_p[find_top(graph)][0]):
+        return vertex_w_p[find_top(graph)][1]
+    return 0
+
+def x_singleton(graph, w):
+    if(w >= vertex_w_p[find_top(graph)][0]):
+        return 1
+    return 0
+
+
+def tree_of_graph(graph, vertex_num, result = {}):
     if(graph == {}):
-        return graph
+        vertex_num -= 1
+        return vertex_num, result
     else:
         top = find_top(graph)
         x = find_x(graph)
         descend = find_descend_of_top(graph, top, 'v6')
         G_left = create_newGraph(graph, find_G_left(find_top(graph), x))
         G_right = create_newGraph(graph, find_G_right(descend, x))
-        DP1(G_left)
-        DP1(G_right)
-        output.append(find_x(graph))
-    return output
+        origin = vertex_num
+        temp = vertex_num + 1
+        vertex_num, result = tree_of_graph(G_left, temp)
+        if(G_right != {} and G_left != {}):
+            vertex_num, result = tree_of_graph(G_right, vertex_num + 1)
+            result_num = origin
+        else:
+            result_num, result = tree_of_graph(G_right, temp)
+
+        result[result_num] = graph
+        return vertex_num, result
+
 
 graph = {'v1': ['v2', 'v4', 'v5'],
          'v2': ['v3'],
@@ -89,6 +152,7 @@ graph = {'v1': ['v2', 'v4', 'v5'],
          'v5': ['v6'],
          'v6': ['']}
 
+vertex = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6']
 vertex_w_p = {'v1': [4, 1],
               'v2': [1, 2],
               'v3': [3, 1],
@@ -98,16 +162,11 @@ vertex_w_p = {'v1': [4, 1],
 
 weight = 8
 
-output = DP1(graph)
-print(output)
-# output_tree = {}
-# j = 0
-# for i in DP1(graph):
-#     temp = 'G' + str(j)
-#     output_tree[temp] = i
-#     j += 1
+output, output_dic = tree_of_graph(graph, 0)
+p_output, x_output = find_p(output_dic)
 
-# print(output_tree)
+for i in p_output:
+    print(i, p_output[i])
 
-# for i in output_tree:
-#     print(output_tree[i])
+for i in x_output:
+    print(i, x_output[i])
